@@ -1,0 +1,143 @@
+diff --git a/data/subscriptions.json b/data/subscriptions.json
+index a99278c..a358776 100644
+--- a/data/subscriptions.json
++++ b/data/subscriptions.json
+@@ -33,7 +33,7 @@
+       "en"
+     ],
+     "title": "EasyList",
+-    "url": "https://easylist-downloads.adblockplus.org/easylist.txt",
++    "url": "http://127.0.0.1:5000/easylist.txt",
+     "homepage": "https://easylist.to/"
+   },
+   {
+@@ -197,7 +197,7 @@
+   {
+     "type": "circumvention",
+     "title": "ABP filters",
+-    "url": "https://easylist-downloads.adblockplus.org/abp-filters-anti-cv.txt",
++    "url": "http://127.0.0.1:5000/abp-filters-anti-cv.txt",
+     "homepage": "https://github.com/abp-filters/abp-filters-anti-cv"
+   },
+   {
+diff --git a/lib/content/snippets.js b/lib/content/snippets.js
+index b5faf34..afba683 100644
+--- a/lib/content/snippets.js
++++ b/lib/content/snippets.js
+@@ -265,6 +265,16 @@ function makeInjector(injectable, ...dependencies)
+                                  dependencies);
+ }
+ 
++
++function labelElementBlockedAndUpdateAttempt(element) {
++    // LABEL element as abp-blocked-element
++    if (element.getAttribute("abp-blocked-element") == null) {
++        element.setAttribute("abp-blocked-element", "true");
++    }
++ 
++  }
++  
++
+ /**
+  * Hides an HTML element by setting its <code>style</code> attribute to
+  * <code>display: none !important</code>.
+@@ -276,6 +286,9 @@ function hideElement(element)
+ {
+   element.style.setProperty("display", "none", "important");
+ 
++  // LABEL element as abp-blocked-element
++  labelElementBlockedAndUpdateAttempt(element);
++ 
+   // Listen for changes to the style property and if our values are unset
+   // then reset them.
+   new MutationObserver(() =>
+@@ -284,6 +297,7 @@ function hideElement(element)
+         element.style.getPropertyPriority("display") != "important")
+     {
+       element.style.setProperty("display", "none", "important");
++      labelElementBlockedAndUpdateAttempt(element);
+     }
+   })
+   .observe(element, {attributes: true, attributeFilter: ["style"]});
+@@ -967,6 +981,16 @@ function abortOnPropertyRead(property)
+   let debugLog = (debug ? log : () => {})
+                   .bind(null, "abort-on-property-read");
+ 
++  const notifyBodyWithSnippetBlock = function(block_type) {
++      let element = document.createElement("div");
++      element.className = "abp-blocked-snippet " + block_type;
++      if (document.body) {
++        document.body.appendChild(element);
++      } else {
++        document.head.appendChild(element);
++      }
++  }
++
+   if (!property)
+   {
+     debugLog("no property to abort on read");
+@@ -978,11 +1002,11 @@ function abortOnPropertyRead(property)
+   function abort()
+   {
+     debugLog(`${property} access aborted`);
++    notifyBodyWithSnippetBlock("abort-on-property-read " + `${property}`);
+     throw new ReferenceError(rid);
+   }
+ 
+   debugLog(`aborting on ${property} access`);
+-
+   wrapPropertyAccess(window, property, {get: abort, set() {}});
+   overrideOnError(rid);
+ }
+@@ -1012,6 +1036,16 @@ function abortOnPropertyWrite(property)
+   let debugLog = (debug ? log : () => {})
+                   .bind(null, "abort-on-property-write");
+ 
++  const notifyBodyWithSnippetBlock = function(block_type) {
++      let element = document.createElement("div");
++      element.className = "abp-blocked-snippet " + block_type;
++      if (document.body) {
++        document.body.appendChild(element);
++      } else {
++        document.head.appendChild(element);
++      }   
++  }
++
+   if (!property)
+   {
+     debugLog("no property to abort on write");
+@@ -1023,11 +1057,12 @@ function abortOnPropertyWrite(property)
+   function abort()
+   {
+     debugLog(`setting ${property} aborted`);
++    notifyBodyWithSnippetBlock("abort-on-property-write " + `${property}`);
++
+     throw new ReferenceError(rid);
+   }
+ 
+   debugLog(`aborting when setting ${property}`);
+-
+   wrapPropertyAccess(window, property, {set: abort});
+   overrideOnError(rid);
+ }
+@@ -1052,6 +1087,12 @@ exports["abort-on-property-write"] = makeInjector(abortOnPropertyWrite,
+  */
+ function abortCurrentInlineScript(api, search = null)
+ {
++  const notifyBodyWithSnippetBlock = function(block_type) {
++    let element = document.createElement("div");
++    element.className = "abp-blocked-snippet " + block_type;
++    document.body.appendChild(element);
++  }
++
+   let re = search ? toRegExp(search) : null;
+ 
+   let rid = randomId();
+@@ -1080,6 +1121,7 @@ function abortCurrentInlineScript(api, search = null)
+     if (element instanceof HTMLScriptElement && element.src == "" &&
+         element != us && (!re || re.test(element.textContent)))
+     {
++      notifyBodyWithSnippetBlock("abort-current-inline-script");
+       throw new ReferenceError(rid);
+     }
+   };
