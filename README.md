@@ -8,6 +8,11 @@ The changes do the following:
 
 For more details, we will refer to the paper.
 
+**This should be used in combination with [CV-Inspector](https://github.com/UCI-Networking-Group/cv-inspector).**
+
+Visit our [CV-Inspector Project page](https://athinagroup.eng.uci.edu/projects/cv-inspector/) for more information, including datasets that we utilized in the paper.
+
+
 # Citation
 If you create a publication (including web pages, papers published by a third party, and publicly available presentations) using this repository or CV-Inspector, please cite the corresponding paper as follows:
 ```
@@ -64,6 +69,10 @@ This setup was tested using Amazon Machine Image: `Ubuntu Server 18.04 LTS (HVM)
 - `npm 6, nodejs 14`: to build this project
 - `Adblock Plus 3.7 for Chrome`: https://github.com/adblockplus/adblockpluschrome
 - `Python 2.7`
+
+# CV-Inspector
+
+See [CV-Inspector](https://github.com/UCI-Networking-Group/cv-inspector) repository for the main component to CV-Inspector.
 
 # License
 Adblock Plus Chrome Extension for CV-Inspector is licensed under [GPL-3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html).
